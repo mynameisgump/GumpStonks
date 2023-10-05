@@ -1,0 +1,19 @@
+{
+  "name": "gumpstonks",
+  "version": "1.0.0",
+  "description": "A project with the goal of creating a mini stock market with valuations based on recent github contributions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node ./src/knowledgeAdsorber.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.1"
+  }
+}
