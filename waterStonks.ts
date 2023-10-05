@@ -36,7 +36,6 @@ const getContributions = async (token: string, username: string) => {
   const data = await response.json();
   return data;
 };
-console.log(Bun.env.GITHUB_TOKEN!);
 const data = await getContributions(process.env.GITHUB_TOKEN!, "mynameisgump");
 console.log(data);
 
