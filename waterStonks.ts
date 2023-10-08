@@ -117,15 +117,13 @@ const main = async () => {
         const days = weeks[week].contributionDays;
         for (let day in days) {
           const insertCommit = db.prepare(
-            "INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?, ?, ?)"
+            `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
           );
+
           insertCommit.run(1, days[day].date, days[day].contributionCount);
         }
-        break;
       }
-      break;
     }
-    break;
   }
 
   usernames.forEach((username) => {
