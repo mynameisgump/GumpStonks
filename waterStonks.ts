@@ -1,52 +1,25 @@
 import { Database } from "bun:sqlite";
 import dotenv from "dotenv";
 dotenv.config();
-const usernames = ["mynameisgump"];
+const usernames = ["mynameisgump", "nint8835", "DanTheMan"];
 const date = new Date();
 // Beginning "2008-01-01T00:00:00Z"
 // End"2009-12-31T23:59:59Z"
-// User Table:
 
-//     user_id (Primary Key): Unique identifier for each GitHub user.
-//     github_username: The GitHub username of the user.
-
-// Commit Activity Table:
-
-//     activity_id (Primary Key): Unique identifier for each daily commit activity record.
-//     user_id (Foreign Key): References the user_id from the User Table.
-//     date: Date of the commit activity.
-//     total_commits: Total number of commits made by the user on that day.
+const queries = {};
 
 const initGumpDb = async () => {
   const db = new Database("gumpdb.sqlite");
-  await db.query(
-    "CREATE TABLE IF NOT EXISTS user (user_id INTEGER PRIMARY KEY, github_username TEXT NOT NULL);"
+  const createUserTable = db.query(
+    "CREATE TABLE IF NOT EXISTS user (user_id INTEGER PRIMARY KEY, github_username TEXT NOT NULL, UNIQUE(user_id,github_username));"
   );
-  await db.query(
+  const createCommitTable = db.query(
     "CREATE TABLE IF NOT EXISTS commit_activity (activity_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, total_commits INTEGER NOT NULL, FOREIGN KEY(user_id) REFERENCES user(user_id));"
   );
-  return db;
-};
 
-const getDateJoinedGithub = async (token: string, username: string) => {
-  const headers = {
-    Authorization: `bearer ${token}`,
-  };
-  const body = {
-    query: `query {
-            user(login: "${username}") {
-              name
-              createdAt
-            }
-          }`,
-  };
-  const response = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: headers,
-  });
-  const data = await response.json();
-  return data;
+  createUserTable.run();
+  createCommitTable.run();
+  return db;
 };
 
 const getYearsContributed = async (token: string, username: string) => {
@@ -72,7 +45,13 @@ const getYearsContributed = async (token: string, username: string) => {
   return data;
 };
 
-const getContributions = async (token: string, username: string) => {
+const getContributionsForYear = async (
+  token: string,
+  username: string,
+  year: number
+) => {
+  const startDate = new Date(year, 0, 1, 0, 0, 0);
+  const endDate = new Date(year, 11, 31, 23, 59, 59);
   const headers = {
     Authorization: `bearer ${token}`,
   };
@@ -80,15 +59,13 @@ const getContributions = async (token: string, username: string) => {
     query: `query {
             user(login: "${username}") {
               name
-              contributionsCollection(from: "2008-01-01T00:00:00Z", to: "2009-12-31T23:59:59Z"){
+              contributionsCollection(from: "${startDate.toISOString()}", to: "${endDate.toISOString()}") {
                 contributionCalendar {
-                  colors
                   totalContributions
                   weeks {
                     contributionDays {
-                      contributionCount
                       date
-                      weekday
+                      contributionCount
                     }
                   }
                 }
@@ -108,18 +85,59 @@ const getContributions = async (token: string, username: string) => {
 const main = async () => {
   const db = await initGumpDb();
 
-  // const data = await getContributions(process.env.GITHUB_TOKEN!, "nint8835");
-  // console.log("Test");
-  // const data = await getYearsContributed(process.env.GITHUB_TOKEN!, "nint8835");
-  // console.log(data);
+  for (let username of usernames) {
+    const testInsertUser = db.prepare(
+      `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
+    );
+    testInsertUser.run({ $username: username });
 
-  // const path = "./nint8835.txt";
-  // await Bun.write(path, JSON.stringify(data));
-  // console.log("Hello World!");
+    break;
+  }
 
-  // const query = db.query("select 'Hello world' as message;");
-  // query.get(); // => { message: "Hello world" }
+  usernames.forEach((username) => {
+    //     INSERT INTO User (github_username)
+    // SELECT 'new_github_username'
+    // WHERE NOT EXISTS (
+    //     SELECT 1
+    //     FROM User
+    //     WHERE github_username = 'new_github_username'
+    // );
+    // const testInsertUser = db.prepare(
+    //   `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
+    // );
+    // testInsertUser.run({ $username: username });
+    // const insertUser = db.prepare(
+    //   `INSERT OR IGNORE INTO user(github_username) VALUES($username)`
+    // );
+    // insertUser.run({ $username: username });
+    // const yearsContributed = await getYearsContributed(
+    //   process.env.GITHUB_TOKEN,
+    //   username
+    // );
+    // const years = yearsContributed.data.user.contributionsCollection.contributionYears;
+    // console.log(years);
+    // years.forEach(async (year) => {
+    //   const contributionsForYear = await getContributionsForYear(
+    //     process.env.GITHUB_TOKEN,
+    //     username,
+    //     year
+    //   );
+    //   const weeks = contributionsForYear.data.user.contributionsCollection.contributionCalendar.weeks;
+    //   weeks.forEach(async (week) => {
+    //     const days = week.contributionDays;
+    //     days.forEach(async (day) => {
+    //       const insertUser = db.prepare(
+    //         "INSERT INTO user (github_username) VALUES (?)"
+    //       );
+    //       insertUser.run(username);
+    //       const insertCommit = db.prepare(
+    //         "INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?, ?, ?)"
+    //       );
+    //       insertCommit.run(1, day.date, day.contributionCount);
+    //     });
+    //   });
+    // });
+  });
 };
 
 main();
-export default getContributions;
