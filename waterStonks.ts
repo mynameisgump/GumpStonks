@@ -86,6 +86,8 @@ const main = async () => {
   const db = await initGumpDb();
 
   for (let username of usernames) {
+    var startTime = performance.now();
+
     const insertUser = db.prepare(
       `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
     );
@@ -94,8 +96,8 @@ const main = async () => {
     const selectUserId = db.prepare(
       `SELECT user_id FROM user WHERE github_username = $username`
     );
-    const userId = selectUserId.get({ $username: username });
-    console.log(userId, username);
+    const userId = (selectUserId.get({ $username: username }) as any).user_id;
+    console.log("Generating database entry for:", username, userId);
 
     const yearsResponse = await getYearsContributed(
       process.env.GITHUB_TOKEN!,
@@ -124,6 +126,8 @@ const main = async () => {
         }
       }
     }
+    var endTime = performance.now();
+    console.log(`Took approximately ${endTime - startTime} milliseconds\n`);
   }
 };
 
