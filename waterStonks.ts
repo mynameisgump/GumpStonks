@@ -86,34 +86,49 @@ const main = async () => {
   const db = await initGumpDb();
 
   for (let username of usernames) {
-    const testInsertUser = db.prepare(
+    const insertUser = db.prepare(
       `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
     );
-    testInsertUser.run({ $username: username });
+    insertUser.all({ $username: username });
 
+    const selectUserId = db.prepare(
+      `SELECT user_id FROM user WHERE github_username = $username`
+    );
+    const userId = selectUserId.get({ $username: username });
+    console.log(userId, username);
+
+    const yearsResponse = await getYearsContributed(
+      process.env.GITHUB_TOKEN!,
+      username
+    );
+    const years =
+      yearsResponse.data.user.contributionsCollection.contributionYears;
+
+    for (let year of years) {
+      const yearlyContributionsResponse = await getContributionsForYear(
+        process.env.GITHUB_TOKEN!,
+        username,
+        year
+      );
+      const weeks =
+        yearlyContributionsResponse.data.user.contributionsCollection
+          .contributionCalendar.weeks;
+      for (let week in weeks) {
+        const days = weeks[week].contributionDays;
+        for (let day in days) {
+          const insertCommit = db.prepare(
+            "INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?, ?, ?)"
+          );
+          insertCommit.run(1, days[day].date, days[day].contributionCount);
+        }
+        break;
+      }
+      break;
+    }
     break;
   }
 
   usernames.forEach((username) => {
-    //     INSERT INTO User (github_username)
-    // SELECT 'new_github_username'
-    // WHERE NOT EXISTS (
-    //     SELECT 1
-    //     FROM User
-    //     WHERE github_username = 'new_github_username'
-    // );
-    // const testInsertUser = db.prepare(
-    //   `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
-    // );
-    // testInsertUser.run({ $username: username });
-    // const insertUser = db.prepare(
-    //   `INSERT OR IGNORE INTO user(github_username) VALUES($username)`
-    // );
-    // insertUser.run({ $username: username });
-    // const yearsContributed = await getYearsContributed(
-    //   process.env.GITHUB_TOKEN,
-    //   username
-    // );
     // const years = yearsContributed.data.user.contributionsCollection.contributionYears;
     // console.log(years);
     // years.forEach(async (year) => {
