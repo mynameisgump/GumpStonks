@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import dotenv from "dotenv";
 dotenv.config();
-const usernames = ["mynameisgump", "nint8835", "DanTheMan"];
+const usernames = ["mynameisgump", "nint8835"];
 const date = new Date();
 // Beginning "2008-01-01T00:00:00Z"
 // End"2009-12-31T23:59:59Z"
@@ -120,37 +120,11 @@ const main = async () => {
             `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
           );
 
-          insertCommit.run(1, days[day].date, days[day].contributionCount);
+          insertCommit.run(userId, days[day].date, days[day].contributionCount);
         }
       }
     }
   }
-
-  usernames.forEach((username) => {
-    // const years = yearsContributed.data.user.contributionsCollection.contributionYears;
-    // console.log(years);
-    // years.forEach(async (year) => {
-    //   const contributionsForYear = await getContributionsForYear(
-    //     process.env.GITHUB_TOKEN,
-    //     username,
-    //     year
-    //   );
-    //   const weeks = contributionsForYear.data.user.contributionsCollection.contributionCalendar.weeks;
-    //   weeks.forEach(async (week) => {
-    //     const days = week.contributionDays;
-    //     days.forEach(async (day) => {
-    //       const insertUser = db.prepare(
-    //         "INSERT INTO user (github_username) VALUES (?)"
-    //       );
-    //       insertUser.run(username);
-    //       const insertCommit = db.prepare(
-    //         "INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?, ?, ?)"
-    //       );
-    //       insertCommit.run(1, day.date, day.contributionCount);
-    //     });
-    //   });
-    // });
-  });
 };
 
 main();
