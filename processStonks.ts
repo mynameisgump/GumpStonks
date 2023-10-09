@@ -17,6 +17,8 @@ interface Commit {
   total_commits: number;
 }
 
+let dateToCalc = new Date(new Date().getTime() - 364 * 5 * 24 * 60 * 60 * 1000);
+
 function calculateCommitValue(commit: Commit, currentDate: Date): number {
   const timeDecayFactor = 0.01;
   const recentContributionMultiplier = 2;
@@ -46,10 +48,11 @@ console.log("Today: ", todaysDate);
 
 for (let user of users) {
   console.log(user.github_username);
-  const commitsQuery = db.query<CommitActivity, number>(
-    `SELECT * FROM commit_activity WHERE user_id = $user`
+  const commitsQuery = db.query(
+    `SELECT * FROM commit_activity WHERE user_id = ?1 AND date <= ?2`
   );
-  const commits = commitsQuery.all(user.user_id);
+  const commits = commitsQuery.all(user.user_id, dateToCalc.toISOString());
+  // console.log("Commits: ", commits);
   const totalCommits = commits.reduce(
     (acc, curr) => acc + curr.total_commits,
     0
@@ -58,7 +61,7 @@ for (let user of users) {
   let total_value = 0;
   for (let commit of commits) {
     const commitDate = new Date(commit.date).toISOString().split("T")[0];
-    const value = calculateCommitValue(commit, new Date());
+    const value = calculateCommitValue(commit, dateToCalc);
     // const daysSinceCommit = Math.floor(
     //   (Date.parse(todaysDate) - Date.parse(commitDate)) / 86400000
     // );
