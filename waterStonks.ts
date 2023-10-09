@@ -99,6 +99,8 @@ const main = async () => {
     const userId = (selectUserId.get({ $username: username }) as any).user_id;
     console.log("Generating database entry for:", username, userId);
 
+    const commitEntries = [];
+
     const yearsResponse = await getYearsContributed(
       process.env.GITHUB_TOKEN!,
       username
@@ -118,14 +120,33 @@ const main = async () => {
       for (let week in weeks) {
         const days = weeks[week].contributionDays;
         for (let day in days) {
-          const insertCommit = db.prepare(
-            `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
-          );
+          // const insertCommit = db.prepare(
+          //   `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
+          // );
 
-          insertCommit.run(userId, days[day].date, days[day].contributionCount);
+          // insertCommit.run(userId, days[day].date, days[day].contributionCount);
+          // commitEntries.push({
+          //   user_id: userId,
+          //   date: days[day].date,
+          //   total_commits: days[day].contributionCount,
+          // });
+          commitEntries.push([
+            userId,
+            days[day].date,
+            days[day].contributionCount,
+          ]);
         }
       }
     }
+
+    const insert = db.prepare(
+      `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
+    );
+    const insertCommits = db.transaction((commits) => {
+      for (const commit of commits) insert.run(...commit);
+      return commits.length;
+    });
+    const inserted = insertCommits(commitEntries);
     var endTime = performance.now();
     console.log(`Took approximately ${endTime - startTime} milliseconds\n`);
   }
