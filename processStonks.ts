@@ -19,6 +19,50 @@ interface Commit {
 
 let dateToCalc = new Date(new Date().getTime() - 364 * 5 * 24 * 60 * 60 * 1000);
 
+// let creatStonksTable = (db: Database) => {
+//   const createStonksTable = db.query(
+//     "CREATE TABLE IF NOT EXISTS stonks (stonks_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, value REAL NOT NULL, FOREIGN KEY(user_id) REFERENCES user(user_id));"
+//   );
+//   createStonksTable.run();
+//   return db;
+// };
+
+const stonksForDay = (date: Date, user: string) => {
+  const db = new Database("gumpdb.sqlite");
+  const userQuery = db.query<UserInfo, [string]>(
+    `SELECT * FROM user WHERE github_username = ?1`
+  );
+  const userResult = userQuery.get(user);
+  if (!userResult) {
+    console.log("User not found");
+    return;
+  }
+  const userId = userResult.user_id;
+  // Filters commits based on date
+  const commitsQuery = db.query<CommitActivity, [number, string]>(
+    `SELECT * FROM commit_activity WHERE user_id = ?1 AND date <= ?2`
+  );
+  const commits = commitsQuery.all(userId, date.toISOString());
+  const totalCommits = commits.reduce(
+    (acc, curr) => acc + curr.total_commits,
+    0
+  );
+
+  let total_value = 0;
+  for (let commit of commits) {
+    const commitDate = new Date(commit.date).toISOString().split("T")[0];
+    const value = calculateCommitValue(commit, date);
+    total_value += value;
+  }
+
+  const insertStonksQuery = db.query(
+    "INSERT INTO stonks (user_id, date, value) VALUES (?1, ?2, ?3)"
+  );
+  insertStonksQuery.run(userId, date.toISOString(), total_value);
+  // return total_value;
+};
+
+// Good Function
 function calculateCommitValue(commit: Commit, currentDate: Date): number {
   const timeDecayFactor = 0.01;
   const recentContributionMultiplier = 2;
@@ -40,63 +84,38 @@ function calculateCommitValue(commit: Commit, currentDate: Date): number {
   return contributionValue;
 }
 
-const db = new Database("gumpdb.sqlite");
-const allUsersQuery = db.query<UserInfo, null>("SELECT * FROM user");
-const users = allUsersQuery.all(null);
-const todaysDate = new Date().toISOString().split("T")[0];
-console.log("Date to calc: ", dateToCalc);
+const main = () => {
+  const db = new Database("gumpdb.sqlite");
+  // creatStonksTable(db);
+  const allUsersQuery = db.query<UserInfo, null>("SELECT * FROM user");
+  const users = allUsersQuery.all(null);
+  const todaysDate = new Date().toISOString().split("T")[0];
+  console.log("Date to calc: ", dateToCalc);
 
-for (let user of users) {
-  console.log(user.github_username);
-  const commitsQuery = db.query<CommitActivity, [number, string]>(
-    `SELECT * FROM commit_activity WHERE user_id = ?1 AND date <= ?2`
-  );
-  const commits = commitsQuery.all(user.user_id, dateToCalc.toISOString());
-  // console.log("Commits: ", commits);
-  const totalCommits = commits.reduce(
-    (acc, curr) => acc + curr.total_commits,
-    0
-  );
+  for (let user of users) {
+    console.log(user.github_username);
+    // Filters query based on date
+    const commitsQuery = db.query<CommitActivity, [number, string]>(
+      `SELECT * FROM commit_activity WHERE user_id = ?1 AND date <= ?2`
+    );
+    const commits = commitsQuery.all(user.user_id, dateToCalc.toISOString());
+    console.log("Commits: ", commits.length);
+    const totalCommits = commits.reduce(
+      (acc, curr) => acc + curr.total_commits,
+      0
+    );
 
-  let total_value = 0;
-  for (let commit of commits) {
-    const commitDate = new Date(commit.date).toISOString().split("T")[0];
-    const value = calculateCommitValue(commit, dateToCalc);
-    // const daysSinceCommit = Math.floor(
-    //   (Date.parse(todaysDate) - Date.parse(commitDate)) / 86400000
-    // );
-    // const commitValue = commit.total_commits * 0.01;
-    // const decay = Math.pow(0.9, daysSinceCommit);
-    // const value = commitValue * decay;
-    total_value += value;
-    // console.log(
-    //   commitDate,
-    //   commit.total_commits,
-    //   commitValue,
-    //   daysSinceCommit,
-    //   decay,
-    //   value
-    // );
+    let total_value = 0;
+    for (let commit of commits) {
+      const commitDate = new Date(commit.date).toISOString().split("T")[0];
+      const value = calculateCommitValue(commit, dateToCalc);
+      total_value += value;
+    }
+
+    console.log("User Commits:", totalCommits);
+    // console.log("Stonk value: ", totalCommits * 0.01);
+    console.log("Total value: ", total_value);
   }
+};
 
-  console.log("User Commits:", totalCommits);
-  // console.log("Stonk value: ", totalCommits * 0.01);
-  console.log("Total value: ", total_value);
-}
-
-//  `SELECT * FROM commit_activity WHERE user_id = 2 AND date BETWEEN "2008-01-01T00:00:00Z" AND "2009-12-31T23:59:59Z"`
-// const db = new Database("gumpdb.sqlite");
-// const nintQuery = db.query<CommitActivity, null>(
-//   `SELECT * FROM commit_activity WHERE user_id = 2`
-// );
-// const gumpQuery = db.query<CommitActivity, null>(
-//   `SELECT * FROM commit_activity WHERE user_id = 1`
-// );
-
-// const nintData = nintQuery.all(null);
-// const gumpData = gumpQuery.all(null);
-
-// const data = [nintData, gumpData];
-
-// // console.log(nintData);
-// console.log();
+main();
