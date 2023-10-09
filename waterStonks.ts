@@ -85,17 +85,23 @@ const getContributionsForYear = async (
 const main = async () => {
   const db = await initGumpDb();
 
-  for (let username of usernames) {
-    var startTime = performance.now();
+  const insertUser = db.prepare(
+    `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
+  );
+  const selectUserId = db.prepare(
+    `SELECT user_id FROM user WHERE github_username = $username`
+  );
+  const insert = db.prepare(
+    `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
+  );
+  const insertCommits = db.transaction((commits) => {
+    for (const commit of commits) insert.run(...commit);
+    return commits.length;
+  });
 
-    const insertUser = db.prepare(
-      `INSERT INTO user(github_username) SELECT $username WHERE NOT EXISTS (SELECT 1 FROM user WHERE github_username = $username)`
-    );
+  for (let username of usernames) {
     insertUser.all({ $username: username });
 
-    const selectUserId = db.prepare(
-      `SELECT user_id FROM user WHERE github_username = $username`
-    );
     const userId = (selectUserId.get({ $username: username }) as any).user_id;
     console.log("Generating database entry for:", username, userId);
 
@@ -120,16 +126,6 @@ const main = async () => {
       for (let week in weeks) {
         const days = weeks[week].contributionDays;
         for (let day in days) {
-          // const insertCommit = db.prepare(
-          //   `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
-          // );
-
-          // insertCommit.run(userId, days[day].date, days[day].contributionCount);
-          // commitEntries.push({
-          //   user_id: userId,
-          //   date: days[day].date,
-          //   total_commits: days[day].contributionCount,
-          // });
           commitEntries.push([
             userId,
             days[day].date,
@@ -139,16 +135,12 @@ const main = async () => {
       }
     }
 
-    const insert = db.prepare(
-      `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
-    );
-    const insertCommits = db.transaction((commits) => {
-      for (const commit of commits) insert.run(...commit);
-      return commits.length;
-    });
+    const startTime = performance.now();
     const inserted = insertCommits(commitEntries);
-    var endTime = performance.now();
-    console.log(`Took approximately ${endTime - startTime} milliseconds\n`);
+    const endTime = performance.now();
+    console.log(
+      `Took approximately ${endTime - startTime} milliseconds for insert \n`
+    );
   }
 };
 
