@@ -2,17 +2,15 @@ import { Database } from "bun:sqlite";
 import dotenv from "dotenv";
 dotenv.config();
 const usernames = [
-  "mynameisgump",
+  // "mynameisgump",
   // "nint8835",
   // "leahmarg",
   // "jackharrhy",
   // "SteveParson",
+  // "ecumene",
+  // "mudkip",
+  "Keenan-Nicholson",
 ];
-const date = new Date();
-// Beginning "2008-01-01T00:00:00Z"
-// End"2009-12-31T23:59:59Z"
-
-const queries = {};
 
 const initGumpDb = async () => {
   const db = new Database("gumpdb.sqlite");
@@ -22,9 +20,13 @@ const initGumpDb = async () => {
   const createCommitTable = db.query(
     "CREATE TABLE IF NOT EXISTS commit_activity (activity_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, total_commits INTEGER NOT NULL, UNIQUE(user_id, date), FOREIGN KEY(user_id) REFERENCES user(user_id));"
   );
+  const createStonksTable = db.query(
+    "CREATE TABLE IF NOT EXISTS stonks (stonks_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, value REAL NOT NULL, FOREIGN KEY(user_id) REFERENCES user(user_id));"
+  );
 
   createUserTable.run();
   createCommitTable.run();
+  createStonksTable.run();
   return db;
 };
 
