@@ -44,11 +44,11 @@ const db = new Database("gumpdb.sqlite");
 const allUsersQuery = db.query<UserInfo, null>("SELECT * FROM user");
 const users = allUsersQuery.all(null);
 const todaysDate = new Date().toISOString().split("T")[0];
-console.log("Today: ", todaysDate);
+console.log("Date to calc: ", dateToCalc);
 
 for (let user of users) {
   console.log(user.github_username);
-  const commitsQuery = db.query(
+  const commitsQuery = db.query<CommitActivity, [number, string]>(
     `SELECT * FROM commit_activity WHERE user_id = ?1 AND date <= ?2`
   );
   const commits = commitsQuery.all(user.user_id, dateToCalc.toISOString());
