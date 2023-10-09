@@ -3,10 +3,10 @@ import dotenv from "dotenv";
 dotenv.config();
 const usernames = [
   "mynameisgump",
-  "nint8835",
-  "leahmarg",
-  "jackharrhy",
-  "SteveParson",
+  // "nint8835",
+  // "leahmarg",
+  // "jackharrhy",
+  // "SteveParson",
 ];
 const date = new Date();
 // Beginning "2008-01-01T00:00:00Z"
@@ -20,7 +20,7 @@ const initGumpDb = async () => {
     "CREATE TABLE IF NOT EXISTS user (user_id INTEGER PRIMARY KEY, github_username TEXT NOT NULL, UNIQUE(user_id,github_username));"
   );
   const createCommitTable = db.query(
-    "CREATE TABLE IF NOT EXISTS commit_activity (activity_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, total_commits INTEGER NOT NULL, FOREIGN KEY(user_id) REFERENCES user(user_id));"
+    "CREATE TABLE IF NOT EXISTS commit_activity (activity_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, total_commits INTEGER NOT NULL, UNIQUE(user_id, date), FOREIGN KEY(user_id) REFERENCES user(user_id));"
   );
 
   createUserTable.run();
@@ -98,7 +98,7 @@ const main = async () => {
     `SELECT user_id FROM user WHERE github_username = $username`
   );
   const insert = db.prepare(
-    `INSERT INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
+    `INSERT OR IGNORE INTO commit_activity (user_id, date, total_commits) VALUES (?1, ?2, ?3)`
   );
   const insertCommits = db.transaction((commits) => {
     for (const commit of commits) insert.run(...commit);
