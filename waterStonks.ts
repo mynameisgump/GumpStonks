@@ -1,7 +1,13 @@
 import { Database } from "bun:sqlite";
 import dotenv from "dotenv";
 dotenv.config();
-const usernames = ["mynameisgump", "nint8835"];
+const usernames = [
+  "mynameisgump",
+  "nint8835",
+  "leahmarg",
+  "jackharrhy",
+  "SteveParson",
+];
 const date = new Date();
 // Beginning "2008-01-01T00:00:00Z"
 // End"2009-12-31T23:59:59Z"
