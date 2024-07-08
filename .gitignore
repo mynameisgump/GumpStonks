@@ -2,3 +2,4 @@
 /.env
 gumpdb.sqlite
 /csv
+*.DS_STORE
