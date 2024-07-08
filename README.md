@@ -28,7 +28,7 @@ This project was created using `bun init` in bun v1.0.2. [Bun](https://bun.sh) i
     - save each day alonside number of contributions into the sql database where the key is their github username
     -
 
-# Chat GPT Databse Schema:
+# Chat GPT Database Schema:
 
 User Table:
 
