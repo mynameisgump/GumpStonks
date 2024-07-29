@@ -71,6 +71,16 @@ function calculateCommitValue(commit: Commit, currentDate: Date): number {
   return contributionValue;
 }
 
+type DataAtom = {
+  x: Date,
+  y: number
+}
+
+type NivoData = {
+  id: string,
+  data: DataAtom[]
+}
+
 const main = async () => {
   const db = new Database("gumpdb.sqlite");
   // creatStonksTable(db);
@@ -81,8 +91,10 @@ const main = async () => {
 
   for (let user of users) {
     console.log(user.github_username);
-    const userFile = Bun.file(`./csv/${user.github_username}.txt`);
+    const userFile = Bun.file(`./csv/${user.github_username}.csv`);
+    const userFileJson = Bun.file(`./json/${user.github_username}.json`);
     const fileExists = await userFile.exists();
+    const jsonData: NivoData = {id: `${user.github_username}`, data: []}
     if (!fileExists) {
       const dayContributedQuery = db.query<CommitActivity, number>(
         `SELECT date FROM commit_activity WHERE user_id=?1 ORDER BY date ASC`
@@ -91,11 +103,15 @@ const main = async () => {
       const allDates = dateObjects.map((date) => date.date);
 
       const stonks = [];
+      const jsonStonks: DataAtom[] = []
       for (let date of allDates) {
-        stonksForDay(new Date(date), user);
+        let calculatedValues = stonksForDay(new Date(date), user);
         stonks.push(stonksForDay(new Date(date), user));
+        jsonStonks.push({x: calculatedValues[0] as Date, y: calculatedValues[1] as number})
       }
-
+      jsonData.data = jsonStonks
+      await Bun.write(userFileJson,JSON.stringify(jsonData))
+      console.log(jsonData)
       const stonksCsv = stonksListToCsv(stonks);
       await Bun.write(userFile, stonksCsv);
     }
