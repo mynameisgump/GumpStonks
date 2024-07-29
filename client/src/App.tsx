@@ -18,9 +18,11 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
-      <div style={{height: "1000px", width: "100px"}}>
+      <div style={{height: "1000px", width: "1000px"}}>
         <ResponsiveLine
           data={[KeenanData]}
+          xScale={{ type: 'point' }}
+          yScale={{ type: 'linear' }}
         />
       </div>
       
