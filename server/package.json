@@ -3,13 +3,13 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "d3": "^7.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.19.2"
   }

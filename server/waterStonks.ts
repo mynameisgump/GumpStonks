@@ -2,13 +2,13 @@ import { Database } from "bun:sqlite";
 import dotenv from "dotenv";
 dotenv.config();
 const usernames = [
-  // "mynameisgump",
-  // "nint8835",
-  // "leahmarg",
-  // "jackharrhy",
-  // "SteveParson",
-  // "ecumene",
-  // "mudkip",
+  "mynameisgump",
+  "nint8835",
+  "leahmarg",
+  "jackharrhy",
+  "SteveParson",
+  "ecumene",
+  "mudkip",
   "Keenan-Nicholson",
 ];
 
