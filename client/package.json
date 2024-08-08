@@ -13,8 +13,11 @@
     "@nivo/bar": "^0.87.0",
     "@nivo/core": "^0.87.0",
     "@nivo/line": "^0.87.0",
+    "d3-format": "^3.1.0",
+    "d3-time-format": "^4.1.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-financial-charts": "^2.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
